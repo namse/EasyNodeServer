@@ -1,10 +1,12 @@
 
-var HelloWorldLayer = cc.Layer.extend({
+var HelloWorldLayer = cc.LayerColor.extend({
     sprite:null,
     ctor:function () {
         //////////////////////////////
         // 1. super init first
         this._super();
+
+        this.setColor(new cc.Color(255,255,255));
 
         /////////////////////////////
         // 2. add a menu item with "X" image, which is clicked to quit the program
@@ -18,7 +20,7 @@ var HelloWorldLayer = cc.Layer.extend({
             res.CloseSelected_png,
             function () {
                 cc.log("Menu is clicked!");
-                gNetworkManager.send('abc');
+                NetworkManager.send('abccc');
             }, this);
         closeItem.attr({
             x: size.width - 20,
@@ -43,17 +45,19 @@ var HelloWorldLayer = cc.Layer.extend({
         // add the label as a child to this layer
         this.addChild(helloLabel, 5);
 
+
+
         // add "HelloWorld" splash screen"
-        this.sprite = new cc.Sprite(res.HelloWorld_png);
+        this.sprite = new cc.Sprite(res.Character_png);
         this.sprite.attr({
             x: size.width / 2,
             y: size.height / 2,
-            scale: 0.5,
-            rotation: 180
+            scale: 1,
+            rotation: 0
         });
-        this.addChild(this.sprite, 0);
+        this.addChild(this.sprite, 7);
 
-        this.sprite.runAction(
+        /*this.sprite.runAction(
             cc.sequence(
                 cc.rotateTo(2, 0),
                 cc.scaleTo(2, 1, 1)
@@ -64,8 +68,8 @@ var HelloWorldLayer = cc.Layer.extend({
                 cc.moveBy(2.5, cc.p(0, size.height - 40)),
                 cc.tintTo(2.5,255,125,0)
             )
-        );
-        gNetworkManager.send('abc');
+        );*/
+        NetworkManager.send('abc');
 
 
 
@@ -74,73 +78,43 @@ var HelloWorldLayer = cc.Layer.extend({
     }
 });
 
-var gNetworkManager = new NetworkManager();
-
-function NetworkManager() {
+var NetworkManager = new function() {
+    var _this = this;
     this.socket = io.connect();
     this.messages = [];
     this.roster = [];
     this.name = '';
 
-    socket.on('connect', function () {
-        setName();
+    this.socket.on('connect', function () {
+        _this.setName();
     });
 
-    socket.on('message', function (msg) {
-        messages.push(msg);
+    this.socket.on('message', function (msg) {
+        _this.messages.push(msg);
     });
 
-    socket.on('roster', function (names) {
-        roster = names;
+    this.socket.on('roster', function (names) {
+        _this.roster = names;
     });
 
     this.send = function send(text) {
         console.log('Sending message:', text);
-        socket.emit('message', text);
+        this.socket.emit('message', text);
         this.text = '';
     };
 
     this.setName = function setName() {
-        socket.emit('identify', name);
+        this.socket.emit('identify', name);
     };
 }
 
-function ChatController() {
-    var socket = io.connect();
-
-    var messages = [];
-    var roster = [];
-    var name = '';
-    var text = '';
-
-    socket.on('connect', function () {
-        setName();
-    });
-
-    socket.on('message', function (msg) {
-        messages.push(msg);
-    });
-
-    socket.on('roster', function (names) {
-        roster = names;
-    });
-
-    var send = function send() {
-        console.log('Sending message:', text);
-        socket.emit('message', text);
-        text = '';
-    };
-
-    var setName = function setName() {
-        socket.emit('identify', name);
-    };
-}
 
 var HelloWorldScene = cc.Scene.extend({
     onEnter:function () {
         this._super();
         var layer = new HelloWorldLayer();
-        this.addChild(layer);
+        this.addChild(layer, 0);
+
     }
 });
 
