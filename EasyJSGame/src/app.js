@@ -64,9 +64,46 @@ var HelloWorldLayer = cc.Layer.extend({
                 cc.tintTo(2.5,255,125,0)
             )
         );
+        ChatController();
+
+
+
+
         return true;
     }
 });
+
+
+function ChatController() {
+    var socket = io.connect();
+
+    var messages = [];
+    var roster = [];
+    var name = '';
+    var text = '';
+
+    socket.on('connect', function () {
+        setName();
+    });
+
+    socket.on('message', function (msg) {
+        messages.push(msg);
+    });
+
+    socket.on('roster', function (names) {
+        roster = names;
+    });
+
+    var send = function send() {
+        console.log('Sending message:', text);
+        socket.emit('message', text);
+        text = '';
+    };
+
+    var setName = function setName() {
+        socket.emit('identify', name);
+    };
+}
 
 var HelloWorldScene = cc.Scene.extend({
     onEnter:function () {
