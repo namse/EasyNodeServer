@@ -64,7 +64,7 @@ var HelloWorldLayer = cc.Layer.extend({
                 cc.tintTo(2.5,255,125,0)
             )
         );
-        ChatController();
+        gNetworkManager.send('abc');
 
 
 
@@ -73,6 +73,36 @@ var HelloWorldLayer = cc.Layer.extend({
     }
 });
 
+var gNetworkManager = new NetworkManager();
+
+function NetworkManager() {
+    this.socket = io.connect();
+    this.messages = [];
+    this.roster = [];
+    this.name = '';
+
+    socket.on('connect', function () {
+        setName();
+    });
+
+    socket.on('message', function (msg) {
+        messages.push(msg);
+    });
+
+    socket.on('roster', function (names) {
+        roster = names;
+    });
+
+    this.send = function send(text) {
+        console.log('Sending message:', text);
+        socket.emit('message', text);
+        this.text = '';
+    };
+
+    this.setName = function setName() {
+        socket.emit('identify', name);
+    };
+}
 
 function ChatController() {
     var socket = io.connect();
