@@ -18,6 +18,7 @@ var HelloWorldLayer = cc.Layer.extend({
             res.CloseSelected_png,
             function () {
                 cc.log("Menu is clicked!");
+                gNetworkManager.send('abc');
             }, this);
         closeItem.attr({
             x: size.width - 20,
