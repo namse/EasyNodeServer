@@ -1,6 +1,6 @@
 
 var HelloWorldLayer = cc.LayerColor.extend({
-    sprite:null,
+    _sprite:null,
     ctor:function () {
         //////////////////////////////
         // 1. super init first
@@ -48,14 +48,14 @@ var HelloWorldLayer = cc.LayerColor.extend({
 
 
         // add "HelloWorld" splash screen"
-        this.sprite = new cc.Sprite(res.Character_png);
-        this.sprite.attr({
+        this._sprite = new cc.Sprite(res.Character_png);
+        this._sprite.attr({
             x: size.width / 2,
             y: size.height / 2,
             scale: 1,
             rotation: 0
         });
-        this.addChild(this.sprite, 7);
+        this.addChild(this._sprite, 7);
 
         /*this.sprite.runAction(
             cc.sequence(
@@ -71,11 +71,51 @@ var HelloWorldLayer = cc.LayerColor.extend({
         );*/
         NetworkManager.send('abc');
 
+        NetworkManager.PositionHandler = this;
+
+
+        if ('mouse' in cc.sys.capabilities)
+            cc.eventManager.addListener({
+                event: cc.EventListener.MOUSE,
+                onMouseMove: function(event){
+                    if(event.getButton() == cc.EventMouse.BUTTON_LEFT)
+                        event.getCurrentTarget().processEvent(event);
+                }
+            }, this);
+
+        if (cc.sys.capabilities.hasOwnProperty('touches')){
+            cc.eventManager.addListener({
+                prevTouchId: -1,
+                event: cc.EventListener.TOUCH_ALL_AT_ONCE,
+                onTouchesMoved:function (touches, event) {
+                    var touch = touches[0];
+                    if (this.prevTouchId != touch.getID())
+                        this.prevTouchId = touch.getID();
+                    else event.getCurrentTarget().processEvent(touches[0]);
+                }
+            }, this);
+        }
 
 
 
         return true;
+    },
+    processEvent:function (event){
+        var delta = event.getDelta();
+        var curPos = cc.p(this._sprite.x, this._sprite.y);
+        curPos = cc.pAdd(curPos, delta);
+        curPos = cc.pClamp(curPos, cc.p(0, 0), cc.p(cc.winSize.width, cc.winSize.height));
+        //this._sprite.x = curPos.x;
+        //this._sprite.y = curPos.y;
+        NetworkManager.setPosition(curPos);
+        curPos = null;
+    },
+
+    positionHandler:function(positions){
+        this._sprite.x = positions[0].x;
+        this._sprite.y = positions[0].y;
     }
+
 });
 
 var NetworkManager = new function() {
@@ -84,6 +124,9 @@ var NetworkManager = new function() {
     this.messages = [];
     this.roster = [];
     this.name = '';
+
+    this.PositionHandler = null;
+
 
     this.socket.on('connect', function () {
         _this.setName();
@@ -97,6 +140,10 @@ var NetworkManager = new function() {
         _this.roster = names;
     });
 
+    this.socket.on('position', function (positions){
+        _this.PositionHandler.positionHandler(positions);
+    })
+
     this.send = function send(text) {
         console.log('Sending message:', text);
         this.socket.emit('message', text);
@@ -106,6 +153,10 @@ var NetworkManager = new function() {
     this.setName = function setName() {
         this.socket.emit('identify', name);
     };
+
+    this.setPosition = function setPosition(position) {
+        this.socket.emit('position' , position);
+    }
 }
 
 

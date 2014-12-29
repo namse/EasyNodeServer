@@ -58,8 +58,27 @@ io.on('connection', function (socket) {
         updateRoster();
       });
     });
+
+    socket.on('position', function (position) {
+        socket.set('position', position, function(err){
+            updatePosition();
+        });
+    });
+
+
   });
 
+function updatePosition() {
+    async.map(
+        sockets,
+        function (socket, callback) {
+            socket.get('position', callback);
+        },
+        function (err, positions) {
+            broadcast('position', positions);
+        }
+    );
+}
 function updateRoster() {
   async.map(
     sockets,
