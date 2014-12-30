@@ -107,13 +107,35 @@ var HelloWorldLayer = cc.LayerColor.extend({
         curPos = cc.pClamp(curPos, cc.p(0, 0), cc.p(cc.winSize.width, cc.winSize.height));
         //this._sprite.x = curPos.x;
         //this._sprite.y = curPos.y;
-        NetworkManager.setPosition(curPos);
+        NetworkManager.setPosition(delta, new Date().getTime());
         curPos = null;
     },
 
     positionHandler:function(positions){
-        this._sprite.x = positions[0].x;
-        this._sprite.y = positions[0].y;
+        var maxTime = positions[0].time;
+        for(var index = 0; index < positions.length; index++)
+        {
+            var positionData = positions[index];
+            if(maxTime < positionData.time)
+             maxTime = positionData.time;
+        }
+        for(var index = 0; index < positions.length; index++)
+        {
+            var positionData = positions[index];
+            if(maxTime == positionData.time)
+            {
+                var curPos = cc.p(this._sprite.x, this._sprite.y);
+
+                curPos = cc.pAdd(curPos, positionData);
+                curPos = cc.pClamp(curPos, cc.p(0, 0), cc.p(cc.winSize.width, cc.winSize.height));
+
+                this._sprite.x = curPos.x;
+                this._sprite.y = curPos.y;
+
+                break;
+            }
+
+        }
     }
 
 });
@@ -154,8 +176,9 @@ var NetworkManager = new function() {
         this.socket.emit('identify', name);
     };
 
-    this.setPosition = function setPosition(position) {
-        this.socket.emit('position' , position);
+    this.setPosition = function setPosition(position, time) {
+        var positionData = {x:position.x, y:position.y, time:time};
+        this.socket.emit('position' , positionData);
     }
 }
 
